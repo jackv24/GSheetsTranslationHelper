@@ -38,7 +38,7 @@ function setActiveState(isUpToDate) {
       const titleVal = titleCell.getValue();
 
       // Only operate on other language cells
-      if (!titleVal || titleVal == "EN" || titleVal == "Notes") continue;
+      if (!titleVal || titleVal == "EN" || titleVal == "Notes" || titleVal == "Type") continue;
 
       // Only operate on cells with values
       const cellVal = cell.getValue();
@@ -96,7 +96,7 @@ function onEditInstallable(e) {
       const titleVal = titleCell.getValue();
 
       // Only need translation tracking on language columns
-      if (!titleVal || titleVal == "Notes") continue;
+      if (!titleVal || titleVal == "Notes" || titleVal == "Type") continue;
 
       if (titleVal == "EN") {
         // If English changed, update other languages states to say needs update
@@ -139,7 +139,7 @@ function updateOtherLanguages(cellEN, rowRange, sheet) {
       const titleVal = titleCell.getValue();
 
       // Only operate on other language cells
-      if (!titleVal || titleVal == "EN" || titleVal == "Notes") continue;
+      if (!titleVal || titleVal == "EN" || titleVal == "Notes" || titleVal == "Type") continue;
 
       // Only operate on cells with values
       const cellVal = cell.getValue();
