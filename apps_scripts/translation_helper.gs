@@ -70,8 +70,6 @@ function setActiveState(isUpToDate) {
  * @see https://developers.google.com/apps-script/guides/triggers#onedite
  */
 function onEditInstallable(e) {
-  //return;
-
   // Open sheet seperately so no undo operations are recorded for user
   var id = e.source.getId();
   var sheetName = e.source.getActiveSheet().getSheetName();
@@ -110,6 +108,9 @@ function onEditInstallable(e) {
         // If other language changed, update state to say translation up to date
         const cellEN = sheet.getRange(row, 2);
         const cellENVal = cellEN.getValue();
+
+        // Don't do anything if there is no text in cell
+        if (!cellENVal) continue;
 
         // Set note to EN value so we know what value this was translated from
         cell.setNote(cellENVal);
