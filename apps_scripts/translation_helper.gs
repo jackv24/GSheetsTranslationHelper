@@ -25,6 +25,10 @@ function setActiveState(isUpToDate) {
   const numRows = range.getNumRows();
   const numCols = range.getNumColumns();
 
+  const values = range.getValues();
+  const notes = range.getNotes();
+  const bgColors = range.getBackgrounds();
+
   for (let j = 1; j <= numRows; j++) {
     for (let i = 1; i <= numCols; i++) {
       const cell = range.getCell(j, i);
@@ -41,27 +45,24 @@ function setActiveState(isUpToDate) {
       if (!titleVal || titleVal == "EN" || titleVal == "Notes" || titleVal == "Type") continue;
 
       // Only operate on cells with values
-      const cellVal = cell.getValue();
+      const cellVal = values[j-1][i-1];
       if (!cellVal) continue;
 
       if (isUpToDate) {
         const cellEN = sheet.getRange(row, 2);
         const cellENVal = cellEN.getValue();
 
-        // Don't do expensive write if not needed
-        if (cell.getNote() == cellENVal) continue;
-
-        cell.setBackground("#d6ffb8");
-        cell.setNote(cellENVal);
+        bgColors[j-1][i-1] = "#d6ffb8";
+        notes[j-1][i-1] = cellENVal;
       } else {
-        // Don't do expensive write if not needed
-        if (!cell.getNote()) continue;
-
-        cell.setBackground("#ffd5b8");
-        cell.setNote("");
+        bgColors[j-1][i-1] = "#ffd5b8";
+        notes[j-1][i-1] = "";
       }
     }
   }
+
+  range.setBackgrounds(bgColors);
+  range.setNotes(notes);
 }
 
 /**
@@ -81,20 +82,29 @@ function onEditInstallable(e) {
   const numRows = range.getNumRows();
   const numCols = range.getNumColumns();
 
-  for (let i = 1; i <= numCols; i++) {
-    for (let j = 1; j <= numRows; j++) {
-      const cell = range.getCell(j, i);
-      const column = cell.getColumn();
-      const row = cell.getRow();
+  const values = range.getValues();
+  const notes = range.getNotes();
+  const bgColors = range.getBackgrounds();
+  const startColumn = range.getColumn();
+  const startRow = range.getRow();
 
-      // Ignore changes in key column or title row
-      if (column <= 1 || row <= 1) continue;
+  for (let i = 0; i < numCols; i++) {
+    const column = startColumn + i;
 
-      const titleCell = sheet.getRange(1, column);
-      const titleVal = titleCell.getValue();
+    // Ignore changes in key column
+    if (column <= 1) continue;
 
-      // Only need translation tracking on language columns
-      if (!titleVal || titleVal == "Notes" || titleVal == "Type") continue;
+    const titleCell = sheet.getRange(1, column);
+    const titleVal = titleCell.getValue();
+
+    // Only need translation tracking on language columns
+    if (!titleVal || titleVal == "Notes" || titleVal == "Type") continue;
+
+    for (let j = 0; j < numRows; j++) {
+      const row = startRow + j;
+
+      // Ignore changes in title row
+      if (row <= 1) continue;
 
       if (titleVal == "EN") {
         // If English changed, update other languages states to say needs update
@@ -102,58 +112,66 @@ function onEditInstallable(e) {
         // Get large enough row range to cover all languages
         const rowRange = sheet.getRange(row, 1, 1, 20);
 
-        updateOtherLanguages(cell, rowRange, sheet);
+        updateOtherLanguages(values[j][i], rowRange, sheet);
 
       } else {
         // If other language changed, update state to say translation up to date
         const cellEN = sheet.getRange(row, 2);
         const cellENVal = cellEN.getValue();
 
-        // Don't do anything if there is no text in cell
+        // Don't do anything if there is no text in source cell
         if (!cellENVal) continue;
 
         // Set note to EN value so we know what value this was translated from
-        cell.setNote(cellENVal);
+        notes[j][i] = cellENVal;
         
         // Mark up to date
-        cell.setBackground("#d6ffb8");
+        bgColors[j][i] = "#d6ffb8";
       }
     }
+
+    range.setBackgrounds(bgColors);
+    range.setNotes(notes);
   }
 }
 
-function updateOtherLanguages(cellEN, rowRange, sheet) {
-  const cellENVal = cellEN.getValue();
+function updateOtherLanguages(cellENVal, range, sheet) {
+  const numRows = range.getNumRows();
+  const numCols = range.getNumColumns();
 
-  const numRows = rowRange.getNumRows();
-  const numCols = rowRange.getNumColumns();
+  const values = range.getValues();
+  const notes = range.getNotes();
+  const bgColors = range.getBackgrounds();
+  const startColumn = range.getColumn();
 
-  for (let i = 1; i <= numCols; i++) {
-    for (let j = 1; j <= numRows; j++) {
-      const cell = rowRange.getCell(j, i);
-      const column = cell.getColumn();
+  for (let i = 0; i < numCols; i++) {
+    const column = startColumn + i;
 
-      // Ignore key column
-      if (column <= 1) continue;
+    // Ignore key column
+    if (column <= 1) continue;
 
-      const titleCell = sheet.getRange(1, column);
-      const titleVal = titleCell.getValue();
+    const titleCell = sheet.getRange(1, column);
+    const titleVal = titleCell.getValue();
 
-      // Only operate on other language cells
-      if (!titleVal || titleVal == "EN" || titleVal == "Notes" || titleVal == "Type") continue;
+    // Only operate on other language cells
+    if (!titleVal || titleVal == "EN" || titleVal == "Notes" || titleVal == "Type") continue;
 
+    for (let j = 0; j < numRows; j++) {
       // Only operate on cells with values
-      const cellVal = cell.getValue();
+      const cellVal = values[j][i];
       if (!cellVal) continue;
 
-      const note = cell.getNote();
+      const note = notes[j][i];
       if (note == cellENVal) {
         // EN value is the same as it was when this cell was updated, must be up to date
-        cell.setBackground("#d6ffb8");
+        bgColors[j][i] = "#d6ffb8";
       } else {
         // EN value has changed, this cell needs updating
-        cell.setBackground("#ffd5b8");
+        bgColors[j][i] = "#ffd5b8";
       }
     }
   }
+
+  range.setBackgrounds(bgColors);
+  range.setNotes(notes);
 }
