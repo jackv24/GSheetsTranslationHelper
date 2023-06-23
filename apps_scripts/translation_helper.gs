@@ -6,7 +6,6 @@ function onOpen() {
   ui.createMenu('Translation Helper')
       .addItem('Mark as Up-to-date', 'setActiveGreen')
       .addItem('Mark as Needs Updating', 'setActiveAmber')
-      //.addSeparator()
       .addToUi();
 }
 
@@ -43,10 +42,6 @@ function setActiveState(isUpToDate) {
 
       // Only operate on other language cells
       if (!titleVal || titleVal == "EN" || titleVal == "Notes" || titleVal == "Type") continue;
-
-      // Only operate on cells with values
-      const cellVal = values[j-1][i-1];
-      if (!cellVal) continue;
 
       if (isUpToDate) {
         const cellEN = sheet.getRange(row, 2);
@@ -119,9 +114,6 @@ function onEditInstallable(e) {
         const cellEN = sheet.getRange(row, 2);
         const cellENVal = cellEN.getValue();
 
-        // Don't do anything if there is no text in source cell
-        if (!cellENVal) continue;
-
         // Set note to EN value so we know what value this was translated from
         notes[j][i] = cellENVal;
         
@@ -157,10 +149,6 @@ function updateOtherLanguages(cellENVal, range, sheet) {
     if (!titleVal || titleVal == "EN" || titleVal == "Notes" || titleVal == "Type") continue;
 
     for (let j = 0; j < numRows; j++) {
-      // Only operate on cells with values
-      const cellVal = values[j][i];
-      if (!cellVal) continue;
-
       const note = notes[j][i];
       if (note == cellENVal) {
         // EN value is the same as it was when this cell was updated, must be up to date
