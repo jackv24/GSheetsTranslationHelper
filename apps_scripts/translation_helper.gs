@@ -6,18 +6,23 @@ function onOpen() {
   ui.createMenu('Translation Helper')
       .addItem('Mark as Up-to-date', 'setActiveGreen')
       .addItem('Mark as Needs Updating', 'setActiveAmber')
+      .addItem('Validate Range', 'validateRange')
       .addToUi();
 }
 
 function setActiveGreen() {
-  setActiveState(true);
+  setActiveState('setTrue');
 }
 
 function setActiveAmber() {
-  setActiveState(false);
+  setActiveState('setFalse');
 }
 
-function setActiveState(isUpToDate) {
+function validateRange() {
+  setActiveState('setValid');
+}
+
+function setActiveState(checkType) {
   const sheet = SpreadsheetApp.getActiveSheet();
   const range = sheet.getActiveRange();
 
@@ -43,13 +48,23 @@ function setActiveState(isUpToDate) {
       // Only operate on other language cells
       if (!titleVal || titleVal == "EN" || titleVal == "Notes" || titleVal == "Type") continue;
 
-      if (isUpToDate) {
+      if (checkType == 'setValid') {
+        const cellVal = values[j-1][i-1];
+        const cellEN = sheet.getRange(row, 2);
+        const cellENVal = cellEN.getValue();
+
+        // Clear note and set needs updating if cell is empty but EN cell isn't
+        if (!cellVal && cellENVal) {
+          bgColors[j-1][i-1] = "#ffd5b8";
+          notes[j-1][i-1] = "";
+        }
+      } else if (checkType == 'setTrue') {
         const cellEN = sheet.getRange(row, 2);
         const cellENVal = cellEN.getValue();
 
         bgColors[j-1][i-1] = "#d6ffb8";
         notes[j-1][i-1] = cellENVal;
-      } else {
+      } else if (checkType == 'setFalse') {
         bgColors[j-1][i-1] = "#ffd5b8";
         notes[j-1][i-1] = "";
       }
@@ -114,11 +129,19 @@ function onEditInstallable(e) {
         const cellEN = sheet.getRange(row, 2);
         const cellENVal = cellEN.getValue();
 
-        // Set note to EN value so we know what value this was translated from
-        notes[j][i] = cellENVal;
-        
-        // Mark up to date
-        bgColors[j][i] = "#d6ffb8";
+        const cellVal = values[j][i];
+
+        if (!cellVal && cellENVal) {
+          // Cell is empty but EN cell isn't, it must need updating
+          notes[j][i] = "";
+          bgColors[j][i] = "#ffd5b8";
+        } else {
+          // Set note to EN value so we know what value this was translated from
+          notes[j][i] = cellENVal;
+          
+          // Mark up to date
+          bgColors[j][i] = "#d6ffb8";
+        }
       }
     }
 
@@ -149,8 +172,14 @@ function updateOtherLanguages(cellENVal, range, sheet) {
     if (!titleVal || titleVal == "EN" || titleVal == "Notes" || titleVal == "Type") continue;
 
     for (let j = 0; j < numRows; j++) {
+      const cellVal = values[j][i];
       const note = notes[j][i];
-      if (note == cellENVal) {
+
+      if (!cellVal && cellENVal) {
+        // Cell is empty but EN cell isn't, it must need updating
+        notes[j][i] = "";
+        bgColors[j][i] = "#ffd5b8";
+      } else if (note == cellENVal) {
         // EN value is the same as it was when this cell was updated, must be up to date
         bgColors[j][i] = "#d6ffb8";
       } else {
