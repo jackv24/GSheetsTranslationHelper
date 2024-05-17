@@ -53,9 +53,16 @@ function setActiveState(checkType) {
         const cellEN = sheet.getRange(row, 2);
         const cellENVal = cellEN.getValue();
 
-        // Clear note and set needs updating if cell is empty but EN cell isn't
-        if (!cellVal && cellENVal) {
-          bgColors[j-1][i-1] = "#ffd5b8";
+        if (!cellVal) {
+          if (cellENVal) {
+            // Needs updating if cell is empty but EN cell isn't
+            bgColors[j-1][i-1] = "#ffd5b8";
+          } else {
+            // Up to date if both EN and self are empty
+            bgColors[j-1][i-1] = "#d6ffb8";
+          }
+
+          // Note no longer relevant when cell is empty
           notes[j-1][i-1] = "";
         }
       } else if (checkType == 'setTrue') {
