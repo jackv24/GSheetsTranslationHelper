@@ -7,6 +7,7 @@ function onOpen() {
       .addItem('Mark as Up-to-date', 'setActiveGreen')
       .addItem('Mark as Needs Updating', 'setActiveAmber')
       .addItem('Validate Range', 'validateRange')
+      .addItem('Copy Protected Ranges to All', 'copyProtectedRanges')
       .addToUi();
 }
 
@@ -198,4 +199,56 @@ function updateOtherLanguages(cellENVal, range, sheet) {
 
   range.setBackgrounds(bgColors);
   range.setNotes(notes);
+}
+
+function copyProtectedRanges() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheets = ss.getSheets();
+  const firstSheet = sheets[0];
+
+  const targetSheet = ss.getActiveSheet();
+
+  if (targetSheet.getName() == firstSheet.getName()) {
+    SpreadsheetApp.getUi().alert("Current sheet is source sheet!");
+    return;
+  }
+  
+  // Get protected ranges from the first sheet
+  const protections = firstSheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+  const columnHeaders = firstSheet.getRange(1, 1, 1, firstSheet.getLastColumn()).getValues()[0];
+  
+  // Clear existing protections in the target sheet (optional)
+  const targetProtections = targetSheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+  targetProtections.forEach(protection => protection.remove());
+  
+  protections.forEach(protection => {
+    const range = protection.getRange();
+    const sourceColumnIndex = range.getColumn();
+    const headerValue = firstSheet.getRange(1, sourceColumnIndex).getValue();
+    const targetColumnIndex = columnHeaders.indexOf(headerValue) + 1; // Match header and get column index
+
+    if (targetColumnIndex > 0) {
+      // Select entire column
+      const targetRange = targetSheet.getRange(`${targetSheet.getRange(1, targetColumnIndex).getA1Notation()[0]}:${targetSheet.getRange(1, targetColumnIndex).getA1Notation()[0]}`); 
+      const newProtection = targetRange.protect();
+      
+      // Copy permissions from source protection
+      if (protection.canDomainEdit()) {
+        newProtection.setDomainEdit(true); // Allow domain editing if enabled
+      } else {
+        const editors = protection.getEditors();
+        newProtection.removeEditors(newProtection.getEditors()); // Clear default editors
+        newProtection.addEditors(editors); // Add source editors
+        
+        if (protection.canEdit()) {
+          newProtection.setDomainEdit(false); // Ensure only added editors can edit
+        }
+      }
+      
+      // Copy description (optional, useful for debugging or documentation)
+      if (protection.getDescription()) {
+        newProtection.setDescription(protection.getDescription());
+      }
+    }
+  });
 }
