@@ -215,7 +215,7 @@ function copyProtectedRanges() {
   
   // Get protected ranges from the first sheet
   const protections = firstSheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
-  const columnHeaders = firstSheet.getRange(1, 1, 1, firstSheet.getLastColumn()).getValues()[0];
+  const columnHeaders = targetSheet.getRange(1, 1, 1, targetSheet.getLastColumn()).getValues()[0];
   
   // Clear existing protections in the target sheet (optional)
   const targetProtections = targetSheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
