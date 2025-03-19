@@ -7,7 +7,7 @@ function onOpen() {
       .addItem('Mark as Up-to-date', 'setActiveGreen')
       .addItem('Mark as Needs Updating', 'setActiveAmber')
       .addItem('Validate Range', 'validateRange')
-      .addItem('Copy Protected Ranges to All', 'copyProtectedRanges')
+      .addItem('Copy Protected Ranges from First to Current Sheet', 'copyProtectedRanges')
       .addToUi();
 }
 
@@ -215,7 +215,7 @@ function copyProtectedRanges() {
   
   // Get protected ranges from the first sheet
   const protections = firstSheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
-  const columnHeaders = targetSheet.getRange(1, 1, 1, targetSheet.getLastColumn()).getValues()[0];
+  const columnHeaders = targetSheet.getRange(1, 1, 1, targetSheet.getLastColumn()).getValues()[0].map(s => s.trim());
   
   // Clear existing protections in the target sheet (optional)
   const targetProtections = targetSheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
@@ -224,7 +224,7 @@ function copyProtectedRanges() {
   protections.forEach(protection => {
     const range = protection.getRange();
     const sourceColumnIndex = range.getColumn();
-    const headerValue = firstSheet.getRange(1, sourceColumnIndex).getValue();
+    const headerValue = firstSheet.getRange(1, sourceColumnIndex).getValue().trim();
     const targetColumnIndex = columnHeaders.indexOf(headerValue) + 1; // Match header and get column index
 
     if (targetColumnIndex > 0) {
@@ -252,3 +252,4 @@ function copyProtectedRanges() {
     }
   });
 }
+
